@@ -17,6 +17,7 @@ import {
   ResourceList,
   Avatar,
   TextStyle,
+  Checkbox,
 } from '@shopify/polaris';
 
 import {
@@ -94,37 +95,12 @@ const testData = [
   },
 ];
 
-function renderItem(item) {
-  const { id, imageUrl, title, uploadedBy } = item;
-  const media = <Avatar customer size="medium" name={name} />;
-
-  return (
-    <ResourceItem
-      id={id}
-      url={imageUrl}
-      media={media}
-      accessibilityLabel={`View details for ${title}`}
-    >
-      <h3>
-        <TextStyle variation="strong">{title}</TextStyle>
-      </h3>
-      <div>by {uploadedBy}</div>
-    </ResourceItem>
-  );
-}
 //this requires data otherwise undefine error will appear
 //showModal  //handleModalChange //handleSubmit //data //option //activator
 function RenderModal(props) {
   //const activator = <Button onClick={props.handleModalChange}>Open</Button>;
-  const [search, setSearch] = useState('');
-  const [data, setData] = useState(
-    props.data.map((obj) => {
-      return {
-        ...obj,
-        selected: false,
-      };
-    })
-  );
+  console.log('&&&&&&&&&&&&&&&&&&');
+  console.log(props.data);
   return (
     <Modal
       //activator={activator}
@@ -145,27 +121,57 @@ function RenderModal(props) {
       ]}
       footer={
         <p>
-          {selectedItems.length} {props.option}(s) selected
+          {props.data.filter((it) => it.selected).length} {props.option}(s)
+          selected
         </p>
       }
     >
       <Modal.Section>
         <TextField
           placeholder={'Search ' + props.option + 's'}
-          value={search}
-          onChange={(val) => setSearch(val)}
+          value={props.search}
+          onChange={(val) => props.setSearch(val)}
           prefix={<Icon source={SearchMajor} />}
         />
       </Modal.Section>
       <Modal.Section>
-        <ResourceList
+        {props.data.map((item, i) => {
+          return (
+            <Card.Section key={i} subdued>
+              <Stack wrap={false} alignment="center">
+                <Stack.Item>
+                  <Checkbox
+                    checked={item.selected}
+                    onChange={() => props.handleSelectChange(i)}
+                  />
+                </Stack.Item>
+                <Stack.Item>
+                  <Avatar
+                    source={item.imageUrl}
+                    customer
+                    size="medium"
+                    name={item.title}
+                  />
+                  ;
+                </Stack.Item>
+                <Stack.Item>
+                  <h3>
+                    <TextStyle variation="strong">{item.title}</TextStyle>
+                  </h3>
+                  <div>by {item.uploadedBy}</div>
+                </Stack.Item>
+              </Stack>
+            </Card.Section>
+          );
+        })}
+        {/* <ResourceList
           resourceName={{ singular: props.option, plural: props.option + 's' }}
           items={data}
           renderItem={renderItem}
           selectedItems={props.selectedItems}
           onSelectionChange={props.setSelectedItems}
           selectable
-        />
+        /> */}
       </Modal.Section>
     </Modal>
   );
@@ -214,13 +220,41 @@ export default function Home() {
 
   //To Show model
   const [showModal, setShowModal] = useState(false);
-  const [showModalFor, setShowModalFor] = useState(false);
+  const [showModalFor, setShowModalFor] = useState('');
 
   //array
-  const [productsCondition, setProductsConditions] = useState('productIsOneOf');
-  const [equalityCondition, setEqualityCondition] = useState('Equals');
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [searchCondition, setSearchCondition] = useState('');
+
+  const [productsdata, setProductsData] = useState(
+    testData.map((obj) => {
+      return {
+        ...obj,
+        selected: false,
+      };
+    })
+  );
+  const [searchProducts, setSearchProducts] = useState('');
+
+  const [collectionData, setCollectionData] = useState(
+    testData.map((obj) => {
+      return {
+        ...obj,
+        selected: false,
+      };
+    })
+  );
+  const [searchCollections, setSearchCollection] = useState('');
+
+  const [conditions, setCondition] = useState([
+    {
+      productsCondition: 'productIsOneOf',
+      equalityCondition: 'Equals',
+      searchCondition: '', //input
+    },
+  ]);
+  //const [productsCondition, setProductsConditions] = useState('');
+  // const [equalityCondition, setEqualityCondition] = useState('Equals');
+  //this is input to apply condition
+  //const [searchCondition, setSearchCondition] = useState('');
 
   const productsConditions = [
     { label: 'Product is one of', value: 'productIsOneOf' },
@@ -234,6 +268,21 @@ export default function Home() {
     { label: 'Contain', value: 'contain' },
   ];
 
+  const handleSelectChange = (i) => {
+    if (showModalFor === 'product') {
+      let p = [...productsdata];
+      let productObj = { ...p[i] };
+      productObj.selected = !productObj.selected;
+      p[i] = productObj;
+      setProductsData(p);
+    } else {
+      let p = [...collectionData];
+      let collectionObj = { ...p[i] };
+      collectionObj.selected = !collectionObj.selected;
+      p[i] = collectionObj;
+      setCollectionData(p);
+    }
+  };
   const handleModalChange = useCallback(() => {
     setShowModal(!showModal);
   }, [showModal]);
@@ -254,6 +303,20 @@ export default function Home() {
   //   );
   // };
 
+  const handleAddCondition = () => {
+    let c = [...conditions];
+    const newObj = {
+      productsCondition: 'productIsOneOf',
+      equalityCondition: 'Equals',
+      searchCondition: '',
+    };
+    c.push(newObj);
+    setCondition(c);
+  };
+
+  const handleRemoveCondition = (ind) => {
+    setCondition(conditions.filter((c, i) => i !== ind));
+  };
   const handleAlertClose = () => {
     setShowAlert({
       renderAlert: false,
@@ -341,11 +404,16 @@ export default function Home() {
       <RenderModal
         showModal={showModal}
         handleModalChange={handleModalChange}
-        handleModalSubmit={handleModalSubmit}
+        handleModalSubmit={
+          showModalFor === 'product' ? handleModalSubmit : handleModalSubmit
+        }
         option={showModalFor}
-        data={testData}
-        selectedItems={selectedItems}
-        setSelectedItems={setSelectedItems}
+        data={showModalFor === 'product' ? productsdata : collectionData}
+        search={showModalFor === 'product' ? searchProducts : searchCollections}
+        setSearch={
+          showModalFor === 'product' ? setSearchProducts : setSearchCollection
+        }
+        handleSelectChange={handleSelectChange}
       />
       {/* Showing Error or Success Alert */}
       <Alert alert={showAlert} handleAlertClose={handleAlertClose} />
@@ -562,69 +630,97 @@ export default function Home() {
               {/* Conditional Rendering  */}
               {showField !== 'allProducts' && (
                 <>
-                  {' '}
-                  <Card.Section>
-                    <Stack alignment="center">
-                      <Stack.Item>
-                        <Select
-                          options={productsConditions}
-                          onChange={(newValue) =>
-                            setProductsConditions(newValue)
-                          }
-                          value={productsCondition}
-                        />
-                      </Stack.Item>
-                      <Stack.Item>
-                        {productsCondition === 'productIsOneOf' ? (
-                          <Button
-                            ariaControls="Choose-Button"
-                            onClick={() => {
-                              setShowModal(true);
-                              setShowModalFor('product');
-                            }}
-                          >
-                            Choose Product
-                          </Button>
-                        ) : productsCondition === 'collectionIsOneOf' ? (
-                          <Button
-                            ariaControls="Choose-Button"
-                            onClick={() => {
-                              setShowModal(true);
-                              setShowModalFor('collection');
-                            }}
-                          >
-                            Choose Collection
-                          </Button>
-                        ) : (
+                  {/*------- This is conditions Card */}
+                  {conditions.map((item, i) => (
+                    <Card.Section key={i}>
+                      <Stack alignment="center">
+                        <Stack.Item>
                           <Select
-                            options={equalityConditions}
-                            onChange={(newValue) =>
-                              setEqualityCondition(newValue)
-                            }
-                            value={equalityCondition}
+                            options={productsConditions}
+                            onChange={(newValue) => {
+                              let c = [...conditions];
+                              let productObj = { ...c[i] };
+                              productObj.productsCondition = newValue;
+                              c[i] = productObj;
+                              setCondition(c);
+                            }}
+                            value={item.productsCondition}
                           />
-                        )}
-                      </Stack.Item>
-                      {productsCondition !== 'productIsOneOf' &&
-                        productsCondition !== 'collectionIsOneOf' && (
-                          <Stack.Item>
-                            <TextField
-                              value={searchCondition}
-                              onChange={(newValue) =>
-                                setSearchCondition(newValue)
-                              }
+                        </Stack.Item>
+                        <Stack.Item>
+                          {item.productsCondition === 'productIsOneOf' ? (
+                            <Button
+                              ariaControls="Choose-Button"
+                              onClick={() => {
+                                setShowModal(true);
+                                setShowModalFor('product');
+                              }}
+                            >
+                              Choose Product
+                            </Button>
+                          ) : item.productsCondition === 'collectionIsOneOf' ? (
+                            <Button
+                              ariaControls="Choose-Button"
+                              onClick={() => {
+                                setShowModal(true);
+                                setShowModalFor('collection');
+                              }}
+                            >
+                              Choose Collection
+                            </Button>
+                          ) : (
+                            <Select
+                              options={equalityConditions}
+                              onChange={(newValue) => {
+                                let c = [...conditions];
+                                let conditionObj = { ...c[i] };
+                                conditionObj.equalityCondition = newValue;
+                                c[i] = conditionObj;
+                                setCondition(c);
+                                //setEqualityCondition(newValue)
+                              }}
+                              value={item.equalityCondition}
                             />
-                          </Stack.Item>
-                        )}
-                      <Stack.Item>
-                        <Button plain ariaControls="Remove-Button">
-                          Remove
-                        </Button>
-                      </Stack.Item>
-                    </Stack>
-                  </Card.Section>
+                          )}
+                        </Stack.Item>
+                        {item.productsCondition !== 'productIsOneOf' &&
+                          item.productsCondition !== 'collectionIsOneOf' && (
+                            <Stack.Item>
+                              <TextField
+                                value={item.searchCondition}
+                                onChange={(newValue) => {
+                                  //if search is based on id then use filter
+                                  let c = [...conditions];
+                                  let productObj = { ...c[i] };
+                                  productObj.searchCondition = newValue;
+                                  c[i] = productObj;
+                                  setCondition(c);
+                                }}
+                              />
+                            </Stack.Item>
+                          )}
+                        <Stack.Item>
+                          <Button
+                            plain
+                            ariaControls="Remove-Button"
+                            onClick={() => handleRemoveCondition(i)}
+                          >
+                            Remove
+                          </Button>
+                        </Stack.Item>
+                      </Stack>
+                    </Card.Section>
+                  ))}
+
+                  {/* ------------conditions Card end*/}
+                  {/* Add condition button */}
                   <Card.Section subdued>
-                    <Button ariaControls="Add-Condition">Add Condition</Button>
+                    <Button
+                      ariaControls="Add-Condition"
+                      onClick={handleAddCondition}
+                    >
+                      Add Condition
+                    </Button>
                   </Card.Section>
                 </>
               )}
