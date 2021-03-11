@@ -143,7 +143,7 @@ function RenderModal(props) {
                 <Stack.Item>
                   <Checkbox
                     checked={item.checkBoxSelected}
-                    onChange={() => props.handleSelectChange(i)}
+                    onChange={() => props.handleSelectChange(item.id)}
                   />
                 </Stack.Item>
                 <Stack.Item>
@@ -305,32 +305,45 @@ export default function Home() {
     );
   }, [searchCollections]);
   //This is for checkbox selection
-  const handleSelectChange = (i) => {
+  const handleSelectChange = (id) => {
     if (showModalFor === 'product') {
-      let p = [...productsdata];
-      let p1 = [...initialProductData];
-
-      let productObj = { ...p[i] };
-      let productObj1 = { ...p1[i] };
-      productObj.checkBoxSelected = !productObj.checkBoxSelected;
-      productObj1.checkBoxSelected = !productObj1.checkBoxSelected;
-      p[i] = productObj;
-      p1[i] = productObj1;
+      //making copy of orignal array
+      let p = productsdata.map((item) => {
+        if (item.id === id) {
+          const newObj = { ...item };
+          newObj.checkBoxSelected = !item.checkBoxSelected;
+          return newObj;
+        }
+        return item;
+      });
+      let p1 = initialProductData.map((item) => {
+        if (item.id === id) {
+          const newObj = { ...item };
+          newObj.checkBoxSelected = !item.checkBoxSelected;
+          return newObj;
+        }
+        return item;
+      });
 
       setProductsData(p);
       setInitialProductData(p1);
     } else {
-      let p = [...collectionData];
-      let p1 = [...collectionData];
-
-      let collectionObj = { ...p[i] };
-      let collectionObj1 = { ...p1[i] };
-
-      collectionObj.checkBoxSelected = !collectionObj.checkBoxSelected;
-      collectionObj1.checkBoxSelected = !collectionObj1.checkBoxSelected;
-
-      p[i] = collectionObj;
-      p1[i] = collectionObj;
+      let p = collectionData.map((item) => {
+        if (item.id === id) {
+          const newObj = { ...item };
+          newObj.checkBoxSelected = !item.checkBoxSelected;
+          return newObj;
+        }
+        return item;
+      });
+      let p1 = collectionData.map((item) => {
+        if (item.id === id) {
+          const newObj = { ...item };
+          newObj.checkBoxSelected = !item.checkBoxSelected;
+          return newObj;
+        }
+        return item;
+      });
 
       setCollectionData(p);
       setInitialCollection(p1);
@@ -388,11 +401,11 @@ export default function Home() {
   }, [showModal]);
 
   //this is to remove product or collection through chip cancel button
-  const handleChipCancelButton = (index, element) => {
+  const handleChipCancelButton = (id, element) => {
     if (element === 'product') {
       let p = [...productsdata];
       const updatedData = p.map((item, ind) => {
-        if (ind == index) {
+        if (item.id == id) {
           item.selected = false;
           item.checkBoxSelected = false;
         }
@@ -403,7 +416,7 @@ export default function Home() {
 
       let p1 = [...initialProductData];
       const updatedData1 = p1.map((item, ind) => {
-        if (ind == index) {
+        if (item.id == id) {
           item.selected = false;
           item.checkBoxSelected = false;
         }
@@ -414,7 +427,7 @@ export default function Home() {
     } else {
       let p = [...collectionData];
       const updatedData = p.map((item, ind) => {
-        if (ind == index) {
+        if (item.id == id) {
           item.selected = false;
           item.checkBoxSelected = false;
         }
@@ -425,7 +438,7 @@ export default function Home() {
 
       let p1 = [...initialCollectionData];
       const updatedData1 = p1.map((item, ind) => {
-        if (ind == index) {
+        if (item.id == id) {
           item.selected = false;
           item.checkBoxSelected = false;
         }
@@ -437,6 +450,7 @@ export default function Home() {
   };
 
   const handleModalSubmit = () => {
+    //to Check Condition already exist
     if (conditionIndex >= 0) {
       const conditionsCopy = [...conditions];
       const condition = { ...conditionsCopy[conditionIndex] };
@@ -891,7 +905,7 @@ export default function Home() {
                                               }}
                                               onClick={() =>
                                                 handleChipCancelButton(
-                                                  index,
+                                                  pro.id,
                                                   'product'
                                                 )
                                               }
@@ -948,7 +962,7 @@ export default function Home() {
                                               }}
                                               onClick={() =>
                                                 handleChipCancelButton(
-                                                  index,
+                                                  pro.id,
                                                   'collection'
                                                 )
                                               }
