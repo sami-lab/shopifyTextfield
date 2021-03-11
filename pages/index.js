@@ -153,7 +153,6 @@ function RenderModal(props) {
                     size="medium"
                     name={item.title}
                   />
-                  ;
                 </Stack.Item>
                 <Stack.Item>
                   <h3>
@@ -244,6 +243,9 @@ export default function Home() {
       };
     })
   );
+  //must set it through initail response
+  const [initialProductData, setInitialProductData] = useState(productsdata);
+
   const [searchProducts, setSearchProducts] = useState('');
 
   const [collectionData, setCollectionData] = useState(
@@ -254,6 +256,9 @@ export default function Home() {
         checkBoxSelected: false,
       };
     })
+  );
+  const [initialCollectionData, setInitialCollection] = useState(
+    collectionData
   );
   const [searchCollections, setSearchCollection] = useState('');
 
@@ -266,6 +271,7 @@ export default function Home() {
       showProducts: true,
     },
   ]);
+
   const [variantConditions, setVariantCondition] = useState([
     {
       attribute: '', //input
@@ -287,26 +293,54 @@ export default function Home() {
     { label: 'Contain', value: 'contain' },
   ];
 
+  useEffect(() => {
+    setProductsData(
+      initialProductData.filter((x) => x.title.includes(searchProducts))
+    );
+  }, [searchProducts]);
+
+  useEffect(() => {
+    setCollectionData(
+      initialCollectionData.filter((x) => x.title.includes(searchCollections))
+    );
+  }, [searchCollections]);
   //This is for checkbox selection
   const handleSelectChange = (i) => {
     if (showModalFor === 'product') {
       let p = [...productsdata];
+      let p1 = [...initialProductData];
+
       let productObj = { ...p[i] };
+      let productObj1 = { ...p1[i] };
       productObj.checkBoxSelected = !productObj.checkBoxSelected;
+      productObj1.checkBoxSelected = !productObj1.checkBoxSelected;
       p[i] = productObj;
+      p1[i] = productObj1;
+
       setProductsData(p);
+      setInitialProductData(p1);
     } else {
       let p = [...collectionData];
+      let p1 = [...collectionData];
+
       let collectionObj = { ...p[i] };
+      let collectionObj1 = { ...p1[i] };
+
       collectionObj.checkBoxSelected = !collectionObj.checkBoxSelected;
+      collectionObj1.checkBoxSelected = !collectionObj1.checkBoxSelected;
+
       p[i] = collectionObj;
+      p1[i] = collectionObj;
+
       setCollectionData(p);
+      setInitialCollection(p1);
     }
   };
 
   const handleModalChange = useCallback(() => {
     if (showModalFor === 'product') {
       let p = [...productsdata];
+      let p1 = [...initialProductData];
       const updatedData = p.map((item) => {
         if (item.selected) {
           item.checkBoxSelected = true;
@@ -316,8 +350,20 @@ export default function Home() {
         return item;
       });
       setProductsData(updatedData);
+
+      const updatedData1 = p1.map((item) => {
+        if (item.selected) {
+          item.checkBoxSelected = true;
+        } else {
+          item.checkBoxSelected = false;
+        }
+        return item;
+      });
+      setInitialProductData(updatedData1);
     } else {
       let p = [...collectionData];
+      let p1 = [...collectionData];
+
       const updatedData = p.map((item) => {
         if (item.selected) {
           item.checkBoxSelected = true;
@@ -327,6 +373,16 @@ export default function Home() {
         return item;
       });
       setCollectionData(updatedData);
+
+      const updatedData1 = p1.map((item) => {
+        if (item.selected) {
+          item.checkBoxSelected = true;
+        } else {
+          item.checkBoxSelected = false;
+        }
+        return item;
+      });
+      setInitialCollection(updatedData1);
     }
     setShowModal(!showModal);
   }, [showModal]);
@@ -344,6 +400,17 @@ export default function Home() {
         return item;
       });
       setProductsData(updatedData);
+
+      let p1 = [...initialProductData];
+      const updatedData1 = p1.map((item, ind) => {
+        if (ind == index) {
+          item.selected = false;
+          item.checkBoxSelected = false;
+        }
+
+        return item;
+      });
+      setInitialProductData(updatedData1);
     } else {
       let p = [...collectionData];
       const updatedData = p.map((item, ind) => {
@@ -355,11 +422,21 @@ export default function Home() {
         return item;
       });
       setCollectionData(updatedData);
+
+      let p1 = [...initialCollectionData];
+      const updatedData1 = p1.map((item, ind) => {
+        if (ind == index) {
+          item.selected = false;
+          item.checkBoxSelected = false;
+        }
+
+        return item;
+      });
+      setCollectionData(updatedData1);
     }
   };
 
   const handleModalSubmit = () => {
-    console.log(conditionIndex, '=====================');
     if (conditionIndex >= 0) {
       const conditionsCopy = [...conditions];
       const condition = { ...conditionsCopy[conditionIndex] };
@@ -390,6 +467,17 @@ export default function Home() {
         return item;
       });
       setProductsData(updatedData);
+
+      let p1 = [...initialProductData];
+      const updatedData1 = p1.map((item) => {
+        if (item.checkBoxSelected) {
+          item.selected = true;
+        } else {
+          item.selected = false;
+        }
+        return item;
+      });
+      setInitialProductData(updatedData1);
     } else {
       let p = [...collectionData];
       const updatedData = p.map((item) => {
@@ -401,7 +489,19 @@ export default function Home() {
         return item;
       });
       setCollectionData(updatedData);
+
+      let p1 = [...initialCollectionData];
+      const updatedData1 = p1.map((item) => {
+        if (item.checkBoxSelected) {
+          item.selected = true;
+        } else {
+          item.selected = false;
+        }
+        return item;
+      });
+      setInitialCollection(updatedData1);
     }
+
     setShowModal(!showModal);
   };
 

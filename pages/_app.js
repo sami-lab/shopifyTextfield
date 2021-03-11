@@ -27,52 +27,54 @@ function MyApp({ Component, pageProps }) {
     </Button>
   );
   React.useEffect(() => {
-    generateToken();
+    //generateToken();
   }, []);
   return (
     <AppProvider i18n={enTranslations}>
-      <Page>
-        <DisplayText size="large">Textfield for Product Page</DisplayText>
-        <Stack distribution="fillEvenly">
-          <Stack.Item>
-            <Heading element="h2">
-              The simple solution for adding a textfield to the product.
-            </Heading>
-          </Stack.Item>
-          <Stack.Item>
-            <div style={{ float: 'right' }}>
-              <Popover
-                active={helpMenu}
-                activator={activator}
-                onClose={toggleHelpMenu}
-              >
-                <ActionList
-                  items={[
-                    {
-                      content: 'Import file',
-                      onAction: () => console.log('Imported action'),
-                    },
-                    {
-                      content: 'Export file',
-                      onAction: () => console.log('Exported action'),
-                    },
-                  ]}
-                />
-              </Popover>
-            </div>
-          </Stack.Item>
-        </Stack>
-        <div
-          style={{
-            borderBottom: '0.3px solid grey',
-            opacity: 0.3,
-            width: '100%',
-            padding: 0,
-            marginBottom: '2em',
-          }}
-        />
-        <Component {...pageProps} />
-      </Page>
+      <div style={{ backgroundColor: '#F4F6F8' }}>
+        <Page>
+          <DisplayText size="large">Textfield for Product Page</DisplayText>
+          <Stack distribution="fillEvenly">
+            <Stack.Item>
+              <Heading element="h2">
+                The simple solution for adding a textfield to the product.
+              </Heading>
+            </Stack.Item>
+            <Stack.Item>
+              <div style={{ float: 'right' }}>
+                <Popover
+                  active={helpMenu}
+                  activator={activator}
+                  onClose={toggleHelpMenu}
+                >
+                  <ActionList
+                    items={[
+                      {
+                        content: 'Import file',
+                        onAction: () => console.log('Imported action'),
+                      },
+                      {
+                        content: 'Export file',
+                        onAction: () => console.log('Exported action'),
+                      },
+                    ]}
+                  />
+                </Popover>
+              </div>
+            </Stack.Item>
+          </Stack>
+          <div
+            style={{
+              borderBottom: '0.3px solid grey',
+              opacity: 0.3,
+              width: '100%',
+              padding: 0,
+              marginBottom: '2em',
+            }}
+          />
+          <Component {...pageProps} />
+        </Page>
+      </div>
     </AppProvider>
   );
 }
