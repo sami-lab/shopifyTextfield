@@ -23,6 +23,7 @@ import {
 import {
   HomeMajor,
   MobileCancelMajor,
+  CancelSmallMinor,
   SearchMajor,
 } from '@shopify/polaris-icons';
 
@@ -99,19 +100,19 @@ const testData = [
 //showModal  //handleModalChange //handleSubmit //data //option //activator
 function RenderModal(props) {
   //const activator = <Button onClick={props.handleModalChange}>Open</Button>;
-  console.log('&&&&&&&&&&&&&&&&&&');
-  console.log(props.data);
+
   return (
     <Modal
       //activator={activator}
-      large
+
       open={props.showModal}
       onClose={props.handleModalChange}
       title={'Add ' + props.option + '(s)'}
       primaryAction={{
         content: 'Add',
         onAction: props.handleModalSubmit,
-        // disabled: !selectedItems.length > 0,
+        disabled:
+          !props.data.filter((item) => item.checkBoxSelected).length > 0,
       }}
       secondaryActions={[
         {
@@ -121,8 +122,8 @@ function RenderModal(props) {
       ]}
       footer={
         <p>
-          {props.data.filter((it) => it.selected).length} {props.option}(s)
-          selected
+          {props.data.filter((it) => it.checkBoxSelected).length} {props.option}
+          (s) selected
         </p>
       }
     >
@@ -141,7 +142,7 @@ function RenderModal(props) {
               <Stack wrap={false} alignment="center">
                 <Stack.Item>
                   <Checkbox
-                    checked={item.selected}
+                    checked={item.checkBoxSelected}
                     onChange={() => props.handleSelectChange(i)}
                   />
                 </Stack.Item>
@@ -164,18 +165,28 @@ function RenderModal(props) {
             </Card.Section>
           );
         })}
-        {/* <ResourceList
-          resourceName={{ singular: props.option, plural: props.option + 's' }}
-          items={data}
-          renderItem={renderItem}
-          selectedItems={props.selectedItems}
-          onSelectionChange={props.setSelectedItems}
-          selectable
-        /> */}
       </Modal.Section>
     </Modal>
   );
 }
+
+//fieldName //fieldSize //fieldLabel //placeholder //fontSize //fieldWidthOption
+//maxFieldLengthOption //maxFieldLength
+//showField //fieldVariant
+
+// [productsCondition, equalityCondition,searchCondition,showProducts: true]
+// [attribute,equalityCondition,searchCondition]
+
+//some of the conditions are
+//Condition
+//{ label: 'Product is one of', value: 'productIsOneOf' },
+//{ label: 'Product Title', value: 'productTitle' },
+//{ label: 'Collection is one of', value: 'collectionIsOneOf' },
+//{ label: 'Collection Title', value: 'collectionTitle' },
+//Equality Condition
+//{ label: 'Equals', value: 'equals' },
+//{ label: 'Contain', value: 'contain' },
+
 export default function Home() {
   const [livePreview, setLivePreview] = useState('');
   const [fieldName, setFieldName] = useState('');
@@ -228,7 +239,8 @@ export default function Home() {
     testData.map((obj) => {
       return {
         ...obj,
-        selected: false,
+        selected: false, //this is selected products after add button click
+        checkBoxSelected: false, //this is just for ui checkboxes
       };
     })
   );
@@ -238,24 +250,31 @@ export default function Home() {
     testData.map((obj) => {
       return {
         ...obj,
-        selected: false,
+        selected: false, //this is selected products after add button click
+        checkBoxSelected: false,
       };
     })
   );
   const [searchCollections, setSearchCollection] = useState('');
 
+  //this is for product conition
   const [conditions, setCondition] = useState([
     {
       productsCondition: 'productIsOneOf',
       equalityCondition: 'Equals',
       searchCondition: '', //input
+      showProducts: true,
     },
   ]);
-  //const [productsCondition, setProductsConditions] = useState('');
-  // const [equalityCondition, setEqualityCondition] = useState('Equals');
-  //this is input to apply condition
-  //const [searchCondition, setSearchCondition] = useState('');
-
+  const [variantConditions, setVariantCondition] = useState([
+    {
+      attribute: '', //input
+      equalityCondition: 'Equals',
+      searchCondition: '', //input
+    },
+  ]);
+  //This store current condition index to check products already exist for that products
+  const [conditionIndex, setConditionIndex] = useState('0');
   const productsConditions = [
     { label: 'Product is one of', value: 'productIsOneOf' },
     { label: 'Product Title', value: 'productTitle' },
@@ -268,55 +287,159 @@ export default function Home() {
     { label: 'Contain', value: 'contain' },
   ];
 
+  //This is for checkbox selection
   const handleSelectChange = (i) => {
     if (showModalFor === 'product') {
       let p = [...productsdata];
       let productObj = { ...p[i] };
-      productObj.selected = !productObj.selected;
+      productObj.checkBoxSelected = !productObj.checkBoxSelected;
       p[i] = productObj;
       setProductsData(p);
     } else {
       let p = [...collectionData];
       let collectionObj = { ...p[i] };
-      collectionObj.selected = !collectionObj.selected;
+      collectionObj.checkBoxSelected = !collectionObj.checkBoxSelected;
       p[i] = collectionObj;
       setCollectionData(p);
     }
   };
+
   const handleModalChange = useCallback(() => {
+    if (showModalFor === 'product') {
+      let p = [...productsdata];
+      const updatedData = p.map((item) => {
+        if (item.selected) {
+          item.checkBoxSelected = true;
+        } else {
+          item.checkBoxSelected = false;
+        }
+        return item;
+      });
+      setProductsData(updatedData);
+    } else {
+      let p = [...collectionData];
+      const updatedData = p.map((item) => {
+        if (item.selected) {
+          item.checkBoxSelected = true;
+        } else {
+          item.checkBoxSelected = false;
+        }
+        return item;
+      });
+      setCollectionData(updatedData);
+    }
     setShowModal(!showModal);
   }, [showModal]);
+
+  //this is to remove product or collection through chip cancel button
+  const handleChipCancelButton = (index, element) => {
+    if (element === 'product') {
+      let p = [...productsdata];
+      const updatedData = p.map((item, ind) => {
+        if (ind == index) {
+          item.selected = false;
+          item.checkBoxSelected = false;
+        }
+
+        return item;
+      });
+      setProductsData(updatedData);
+    } else {
+      let p = [...collectionData];
+      const updatedData = p.map((item, ind) => {
+        if (ind == index) {
+          item.selected = false;
+          item.checkBoxSelected = false;
+        }
+
+        return item;
+      });
+      setCollectionData(updatedData);
+    }
+  };
+
   const handleModalSubmit = () => {
+    console.log(conditionIndex, '=====================');
+    if (conditionIndex >= 0) {
+      const conditionsCopy = [...conditions];
+      const condition = { ...conditionsCopy[conditionIndex] };
+      //if condition property already exist them remove that condition index
+      //remove one which showProduct is false
+      const itemExist = conditionsCopy.filter(
+        (x) => x.productsCondition == condition.productsCondition
+      );
+      if (itemExist.length > 1) {
+        //mean exist more than 1time
+        //removing that index which exist more than one with showProduct ==false
+        setCondition(conditionsCopy.filter((ele) => ele.showProducts));
+      } else {
+        condition.showProducts = true;
+        conditionsCopy[conditionIndex] = condition;
+        setCondition(conditionsCopy);
+      }
+    }
+    //Check which checkbox is selected to save them
+    if (showModalFor === 'product') {
+      let p = [...productsdata];
+      const updatedData = p.map((item) => {
+        if (item.checkBoxSelected) {
+          item.selected = true;
+        } else {
+          item.selected = false;
+        }
+        return item;
+      });
+      setProductsData(updatedData);
+    } else {
+      let p = [...collectionData];
+      const updatedData = p.map((item) => {
+        if (item.checkBoxSelected) {
+          item.selected = true;
+        } else {
+          item.selected = false;
+        }
+        return item;
+      });
+      setCollectionData(updatedData);
+    }
     setShowModal(!showModal);
   };
-  //showModal  //handleModalChange //handleSubmit //data //option //activator
-  // const showModel = (
-  //   visibile,
-  //   handleModalChange,
-  //   handleModalSubmit,
-  //   data,
-  //   option
-  // ) => {
-  //   console.log(visibile, '----------------------------');
-  //   return (
 
-  //   );
-  // };
-
+  //this is for adding condition in product
   const handleAddCondition = () => {
     let c = [...conditions];
     const newObj = {
       productsCondition: 'productIsOneOf',
       equalityCondition: 'Equals',
       searchCondition: '',
+      showProducts: false,
     };
     c.push(newObj);
     setCondition(c);
   };
 
+  //this is for remove condition in product
   const handleRemoveCondition = (ind) => {
     setCondition(conditions.filter((c, i) => i !== ind));
   };
+
+  //this is for adding condition in variant
+  const handleAddVariantCondition = () => {
+    let c = [...variantConditions];
+    const newObj = {
+      attribute: '', //input
+      equalityCondition: 'Equals',
+      searchCondition: '', //input
+    };
+    c.push(newObj);
+    setVariantCondition(c);
+  };
+
+  //this is for remove condition in product
+  const handleRemoveVariantCondition = (ind) => {
+    setVariantCondition(variantConditions.filter((c, i) => i !== ind));
+  };
+
   const handleAlertClose = () => {
     setShowAlert({
       renderAlert: false,
@@ -348,15 +471,6 @@ export default function Home() {
     });
   };
 
-  // useEffect(() => {
-  //   showModel(
-  //     showModal,
-  //     handleModalChange,
-  //     handleModalSubmit,
-  //     testData,
-  //     showModalFor
-  //   );
-  // }, [showModal]);
   return (
     <div>
       <Head>
@@ -367,7 +481,7 @@ export default function Home() {
       {/* Top Buttons */}
       <Stack distribution="fillEvenly">
         <Stack.Item>
-          <Link href="#">
+          <Link href="/dashboard">
             <a
               style={{
                 color: '#000',
@@ -633,7 +747,7 @@ export default function Home() {
                   {/*------- This is conditions Card */}
                   {conditions.map((item, i) => (
                     <Card.Section key={i}>
-                      <Stack alignment="center">
+                      <Stack>
                         <Stack.Item>
                           <Select
                             options={productsConditions}
@@ -649,25 +763,119 @@ export default function Home() {
                         </Stack.Item>
                         <Stack.Item>
                           {item.productsCondition === 'productIsOneOf' ? (
-                            <Button
-                              ariaControls="Choose-Button"
-                              onClick={() => {
-                                setShowModal(true);
-                                setShowModalFor('product');
-                              }}
-                            >
-                              Choose Product
-                            </Button>
+                            <Stack vertical>
+                              {item.showProducts &&
+                                productsdata
+                                  .filter((x) => x.selected)
+                                  .map((pro, index) => (
+                                    <Stack.Item key={index}>
+                                      <div
+                                        style={{
+                                          backgroundColor: '#DFE3E8',
+                                          padding: '0.5em 0.9em',
+                                          borderRadius: 3,
+                                        }}
+                                      >
+                                        <Stack
+                                          alignment="center"
+                                          distribution="equalSpacing"
+                                        >
+                                          <Stack.Item>
+                                            <p>{pro.title}</p>
+                                          </Stack.Item>
+                                          <Stack.Item>
+                                            <p
+                                              style={{
+                                                color: '#7A8894',
+                                                cursor: 'pointer',
+                                              }}
+                                              onClick={() =>
+                                                handleChipCancelButton(
+                                                  index,
+                                                  'product'
+                                                )
+                                              }
+                                            >
+                                              <Icon
+                                                source={CancelSmallMinor}
+                                                color="subdued"
+                                              />
+                                            </p>
+                                          </Stack.Item>
+                                        </Stack>
+                                      </div>
+                                    </Stack.Item>
+                                  ))}
+                              <Stack.Item>
+                                <Button
+                                  ariaControls="Choose-Button"
+                                  onClick={() => {
+                                    setShowModal(true);
+                                    setConditionIndex(i);
+                                    setShowModalFor('product');
+                                  }}
+                                >
+                                  Choose Product
+                                </Button>
+                              </Stack.Item>
+                            </Stack>
                           ) : item.productsCondition === 'collectionIsOneOf' ? (
-                            <Button
-                              ariaControls="Choose-Button"
-                              onClick={() => {
-                                setShowModal(true);
-                                setShowModalFor('collection');
-                              }}
-                            >
-                              Choose Collection
-                            </Button>
+                            <Stack vertical>
+                              {item.showProducts &&
+                                collectionData
+                                  .filter((x) => x.selected)
+                                  .map((pro, index) => (
+                                    <Stack.Item key={index}>
+                                      <div
+                                        style={{
+                                          backgroundColor: '#DFE3E8',
+                                          padding: '0.5em 0.9em',
+                                          borderRadius: 3,
+                                        }}
+                                      >
+                                        <Stack
+                                          alignment="center"
+                                          distribution="equalSpacing"
+                                        >
+                                          <Stack.Item>
+                                            <p>{pro.title}</p>
+                                          </Stack.Item>
+                                          <Stack.Item>
+                                            <p
+                                              style={{
+                                                color: '#7A8894',
+                                                cursor: 'pointer',
+                                              }}
+                                              onClick={() =>
+                                                handleChipCancelButton(
+                                                  index,
+                                                  'collection'
+                                                )
+                                              }
+                                            >
+                                              <Icon
+                                                source={CancelSmallMinor}
+                                                color="subdued"
+                                              />
+                                            </p>
+                                          </Stack.Item>
+                                        </Stack>
+                                      </div>
+                                    </Stack.Item>
+                                  ))}
+                              <Stack.Item>
+                                <Button
+                                  ariaControls="Choose-Button"
+                                  onClick={() => {
+                                    setShowModal(true);
+                                    setConditionIndex(i);
+                                    setShowModalFor('collection');
+                                  }}
+                                >
+                                  Choose Collection
+                                </Button>
+                              </Stack.Item>
+                            </Stack>
                           ) : (
                             <Select
                               options={equalityConditions}
@@ -699,15 +907,19 @@ export default function Home() {
                               />
                             </Stack.Item>
                           )}
-                        <Stack.Item>
-                          <Button
-                            plain
-                            ariaControls="Remove-Button"
-                            onClick={() => handleRemoveCondition(i)}
-                          >
-                            Remove
-                          </Button>
-                        </Stack.Item>
+                        {i !== 0 && (
+                          <Stack.Item>
+                            <div style={{ marginTop: '0.5em' }}>
+                              <Button
+                                plain
+                                ariaControls="Remove-Button"
+                                onClick={() => handleRemoveCondition(i)}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </Stack.Item>
+                        )}
                       </Stack>
                     </Card.Section>
                   ))}
@@ -732,65 +944,151 @@ export default function Home() {
       <div style={{ marginTop: '1em' }}>
         <Layout>
           <Layout.AnnotatedSection>
-            <Card sectioned>
-              <FormLayout>
-                <Stack vertical>
-                  <RadioButton
-                    label={
-                      <p>
-                        For matching products, show for{' '}
-                        <span style={{ fontWeight: 'bold' }}>
-                          {' '}
-                          all variants
-                        </span>
-                      </p>
-                    }
-                    checked={fieldVariant === 'allVarients'}
-                    id="allVarients"
-                    name="fieldVariant"
-                    onChange={(_checked, newValue) => setFieldVariant(newValue)}
-                  />
-                  <RadioButton
-                    label={
-                      <p>
-                        Show on variants that match{' '}
-                        <span style={{ fontWeight: 'bold' }}>any</span> of these
-                        conditions
-                      </p>
-                    }
-                    checked={fieldVariant === 'anyVarient'}
-                    id="anyVarient"
-                    name="fieldVariant"
-                    onChange={(_checked, newValue) => setFieldVariant(newValue)}
-                  />
-                  <RadioButton
-                    label={
-                      <p>
-                        Show on variants that match{' '}
-                        <span style={{ fontWeight: 'bold' }}>all</span> of these
-                        conditions
-                      </p>
-                    }
-                    checked={fieldVariant === 'allVarient'}
-                    id="allVarient"
-                    name="fieldVariant"
-                    onChange={(_checked, newValue) => setFieldVariant(newValue)}
-                  />
-                  <RadioButton
-                    label={
-                      <p>
-                        Show on variants that match{' '}
-                        <span style={{ fontWeight: 'bold' }}>none</span> of
-                        these condition
-                      </p>
-                    }
-                    checked={fieldVariant === 'noneVarient'}
-                    id="noneVarient"
-                    name="fieldVariant"
-                    onChange={(_checked, newValue) => setFieldVariant(newValue)}
-                  />
-                </Stack>
-              </FormLayout>
+            <Card>
+              <Card.Section>
+                <FormLayout>
+                  <Stack vertical>
+                    <RadioButton
+                      label={
+                        <p>
+                          For matching products, show for{' '}
+                          <span style={{ fontWeight: 'bold' }}>
+                            {' '}
+                            all variants
+                          </span>
+                        </p>
+                      }
+                      checked={fieldVariant === 'allVarients'}
+                      id="allVarients"
+                      name="fieldVariant"
+                      onChange={(_checked, newValue) =>
+                        setFieldVariant(newValue)
+                      }
+                    />
+                    <RadioButton
+                      label={
+                        <p>
+                          Show on variants that match{' '}
+                          <span style={{ fontWeight: 'bold' }}>any</span> of
+                          these conditions
+                        </p>
+                      }
+                      checked={fieldVariant === 'anyVarient'}
+                      id="anyVarient"
+                      name="fieldVariant"
+                      onChange={(_checked, newValue) =>
+                        setFieldVariant(newValue)
+                      }
+                    />
+                    <RadioButton
+                      label={
+                        <p>
+                          Show on variants that match{' '}
+                          <span style={{ fontWeight: 'bold' }}>all</span> of
+                          these conditions
+                        </p>
+                      }
+                      checked={fieldVariant === 'allVarient'}
+                      id="allVarient"
+                      name="fieldVariant"
+                      onChange={(_checked, newValue) =>
+                        setFieldVariant(newValue)
+                      }
+                    />
+                    <RadioButton
+                      label={
+                        <p>
+                          Show on variants that match{' '}
+                          <span style={{ fontWeight: 'bold' }}>none</span> of
+                          these condition
+                        </p>
+                      }
+                      checked={fieldVariant === 'noneVarient'}
+                      id="noneVarient"
+                      name="fieldVariant"
+                      onChange={(_checked, newValue) =>
+                        setFieldVariant(newValue)
+                      }
+                    />
+                  </Stack>
+                </FormLayout>
+              </Card.Section>
+              {fieldVariant !== 'allVarients' && (
+                <>
+                  {/*------- This is varaint conditions Card */}
+                  {variantConditions.map((item, i) => (
+                    <Card.Section key={i}>
+                      <Stack>
+                        <Stack.Item>
+                          <TextField
+                            value={item.attribute}
+                            placeholder="e.g Size"
+                            onChange={(newValue) => {
+                              //if search is based on id then use filter
+                              let c = [...variantConditions];
+                              let productObj = { ...c[i] };
+                              productObj.attribute = newValue;
+                              c[i] = productObj;
+                              setVariantCondition(c);
+                            }}
+                          />
+                        </Stack.Item>
+                        <Stack.Item>
+                          <Select
+                            options={equalityConditions}
+                            onChange={(newValue) => {
+                              let c = [...variantConditions];
+                              let conditionObj = { ...c[i] };
+                              conditionObj.equalityCondition = newValue;
+                              c[i] = conditionObj;
+                              setVariantCondition(c);
+                            }}
+                            value={item.equalityCondition}
+                          />
+                        </Stack.Item>
+                        <Stack.Item>
+                          <TextField
+                            placeholder="e.g 30x40 cm"
+                            value={item.searchCondition}
+                            onChange={(newValue) => {
+                              //if search is based on id then use filter
+                              let c = [...variantConditions];
+                              let productObj = { ...c[i] };
+                              productObj.searchCondition = newValue;
+                              c[i] = productObj;
+                              setVariantCondition(c);
+                            }}
+                          />
+                        </Stack.Item>
+                        {i !== 0 && (
+                          <Stack.Item>
+                            <div style={{ marginTop: '0.5em' }}>
+                              <Button
+                                plain
+                                ariaControls="Remove-Button"
+                                onClick={() => handleRemoveVariantCondition(i)}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </Stack.Item>
+                        )}
+                      </Stack>
+                    </Card.Section>
+                  ))}
+
+                  {/* ------------conditions Card end*/}
+                  {/* Add condition button */}
+                  <Card.Section subdued>
+                    <Button
+                      ariaControls="Add-Condition"
+                      onClick={handleAddVariantCondition}
+                    >
+                      Add Condition
+                    </Button>
+                  </Card.Section>
+                </>
+              )}
             </Card>
           </Layout.AnnotatedSection>
         </Layout>
