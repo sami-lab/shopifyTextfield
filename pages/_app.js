@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import '@shopify/polaris/dist/styles.css';
-import { generateToken } from '../src/generateToken';
+//import generateToken  from '../src/generateToken';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {
   AppProvider,
